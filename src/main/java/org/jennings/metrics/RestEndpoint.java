@@ -25,6 +25,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Iterator;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -44,11 +45,23 @@ public class RestEndpoint {
     String url;  // scheme://host:port
 
     public RestEndpoint(String url) {
-        this.url = url;
+        
+        if (!url.startsWith("http")) {
+            // Assuming http
+            this.url = "http://" + url;
+        } else {
+            this.url = url;
+        }
+                
+        
+        
     }
 
-    JSONObject get(String path, HashMap<String, String> params) {
-        JSONObject json = new JSONObject();
+    String get(String path, HashMap<String, String> params) {
+        
+        String respFromServer = null;
+                
+        
         try {
             String url2 = this.url + path;
 
@@ -70,15 +83,34 @@ public class RestEndpoint {
             while ((line = rd.readLine()) != null) {
                 result.append(line);
             }
-
-            //System.out.println(result);
-            json = new JSONObject(result.toString());
+            
+            respFromServer = result.toString();
+            
 
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException | IOException e) {
             System.err.println(e.getMessage());
         }
 
-        return json;
+        return respFromServer;
     }
 
+    public static void main(String args[]) {
+        String url = "m1:5050";
+        RestEndpoint r = new RestEndpoint(url);
+        
+        JSONObject json = new JSONObject();
+        String resp = r.get("/metrics/snapshot", null);
+        System.out.println(resp);
+        
+        json = new JSONObject(resp.toString());
+        
+        Iterator<String> keys = json.keys();
+        while (keys.hasNext()) {
+            System.out.println(keys.next());
+        }
+        
+    }
+    
+    
+    
 }
